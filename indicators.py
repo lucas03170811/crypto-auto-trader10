@@ -1,15 +1,15 @@
-import numpy as np
+import pandas as pd
+from binance.um_futures import UMFutures
 
-def get_rsi(closes, period=14):
-    deltas = np.diff(closes)
-    gains = np.where(deltas > 0, deltas, 0)
-    losses = np.where(deltas < 0, -deltas, 0)
-    avg_gain = np.mean(gains[-period:])
-    avg_loss = np.mean(losses[-period:])
-    rs = avg_gain / avg_loss if avg_loss != 0 else 0
-    return 100 - (100 / (1 + rs))
+client = UMFutures()
 
-def get_volatility(volumes, threshold=1.3):
-    recent = np.mean(volumes[-3:])
-    past = np.mean(volumes[-10:-3])
-    return recent > past * threshold
+def get_klines(symbol: str, interval: str, limit: int = 100):
+    data = client.klines(symbol=symbol, interval=interval, limit=limit)
+    df = pd.DataFrame(data, columns=[
+        "timestamp", "open", "high", "low", "close", "volume",
+        "close_time", "quote_asset_volume", "number_of_trades",
+        "taker_buy_base", "taker_buy_quote", "ignore"
+    ])
+    df["close"] = pd.to_numeric(df["close"])
+    df["open"] = pd.to_numeric(df["open"])
+    return df
