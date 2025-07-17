@@ -1,2 +1,4 @@
-python-binance==1.0.17
+binance-futures-connector==3.0.0
+pandas
 numpy
+python-dotenv
