@@ -5,25 +5,35 @@ from binance.um_futures import UMFutures
 from strategy import analyze_market
 from trade import manage_position
 
+# 從環境變數中讀取 API Key
 API_KEY = os.getenv("BINANCE_API_KEY")
 API_SECRET = os.getenv("BINANCE_API_SECRET")
 
+# 初始化 Binance 客戶端
 client = UMFutures(key=API_KEY, secret=API_SECRET)
 
-symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT"]
-intervals = ["15m", "1h"]
+# 監控的幣種清單
+SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT"]
 
-def run():
+# 時間間隔（單位：秒），例如每 60 秒分析一次
+INTERVAL = 60
+
+def run_bot():
+    print("📈 自動交易機器人啟動中...")
     while True:
-        print(f"===== {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} =====")
-        for symbol in symbols:
-            try:
-                signal = analyze_market(client, symbol, intervals)
+        try:
+            for symbol in SYMBOLS:
+                print(f"\n⏰ 分析幣種: {symbol} | {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+                signal = analyze_market(client, symbol)
                 if signal:
                     manage_position(client, symbol, signal)
-            except Exception as e:
-                print(f"[ERROR] {symbol}: {e}")
-        time.sleep(60)
+                else:
+                    print(f"🔍 無交易訊號: {symbol}")
+
+        except Exception as e:
+            print(f"⚠️ 發生錯誤: {e}")
+
+        time.sleep(INTERVAL)
 
 if __name__ == "__main__":
-    run()
+    run_bot()
