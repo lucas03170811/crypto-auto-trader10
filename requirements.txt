@@ -1,4 +1,5 @@
-python-binance
+binance-connector>=3.0.0
 pandas
-schedule
+numpy
 ta
+python-dotenv
