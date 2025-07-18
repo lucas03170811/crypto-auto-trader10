@@ -2,4 +2,5 @@ binance-connector>=3.0.0
 pandas
 numpy
 ta
+binance-connector
 schedule
