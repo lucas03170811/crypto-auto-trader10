@@ -2,7 +2,7 @@ import os
 import time
 from datetime import datetime
 from binance.um_futures import UMFutures
-from strategy import analyze_market
+from binance.error import ClientError
 from trade import manage_position
 
 # 從環境變數中讀取 API Key
