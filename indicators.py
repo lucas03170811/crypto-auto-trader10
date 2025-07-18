@@ -1,36 +1,34 @@
-import requests
+import ta
+import pandas as pd
+from binance_client import get_klines
 
-def get_signal(symbol):
-    klines = get_klines(symbol, interval='15m', limit=50)
-    closes = [float(k[4]) for k in klines]
-    volume = [float(k[5]) for k in klines]
+def get_indicators(symbol):
+    df_15m = get_klines(symbol, interval="15m", limit=100)
+    df_1h = get_klines(symbol, interval="1h", limit=100)
 
-    # 計算簡單 RSI
-    rsi = compute_rsi(closes)
-    vol_avg = sum(volume[-10:]) / 10
+    def apply_ta(df):
+        df["rsi"] = ta.momentum.RSIIndicator(df["close"]).rsi()
+        df["ema_fast"] = ta.trend.EMAIndicator(df["close"], window=9).ema_indicator()
+        df["ema_slow"] = ta.trend.EMAIndicator(df["close"], window=21).ema_indicator()
+        df["macd"] = ta.trend.MACD(df["close"]).macd_diff()
+        df["boll_up"], df["boll_mid"], df["boll_low"] = ta.volatility.BollingerBands(df["close"]).bollinger_hband(), ta.volatility.BollingerBands(df["close"]).bollinger_mavg(), ta.volatility.BollingerBands(df["close"]).bollinger_lband()
+        df["volume_growth"] = df["volume"].pct_change()
+        return df
 
-    if rsi < 30 and volume[-1] > vol_avg:
-        return 'BUY'
-    elif rsi > 70 and volume[-1] > vol_avg:
-        return 'SELL'
-    else:
-        return 'HOLD'
+    df_15m = apply_ta(df_15m)
+    df_1h = apply_ta(df_1h)
 
-def get_klines(symbol, interval='1h', limit=100):
-    url = f"https://fapi.binance.com/fapi/v1/klines?symbol={symbol}&interval={interval}&limit={limit}"
-    response = requests.get(url)
-    return response.json()
+    last_rsi = df_15m["rsi"].iloc[-1]
+    trend = "LONG" if df_1h["ema_fast"].iloc[-1] > df_1h["ema_slow"].iloc[-1] else "SHORT"
+    vol_growth = df_15m["volume_growth"].iloc[-1] > 0.2
+    macd_positive = df_1h["macd"].iloc[-1] > 0
 
-def compute_rsi(data, period=14):
-    gain = 0
-    loss = 0
-    for i in range(1, period+1):
-        delta = data[-i] - data[-i-1]
-        if delta > 0:
-            gain += delta
-        else:
-            loss -= delta
-    if loss == 0:
-        return 100
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
+    should_open = last_rsi > 50 and macd_positive and vol_growth
+
+    return {
+        "rsi": round(last_rsi, 2),
+        "ema_trend": trend,
+        "vol_growth": vol_growth,
+        "trend": trend,
+        "should_open": should_open
+    }
