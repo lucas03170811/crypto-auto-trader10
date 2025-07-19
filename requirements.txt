@@ -1,4 +1,4 @@
 binance-futures-connector==1.4.0
 pandas
 numpy
-ta
+ta-lib-bin
