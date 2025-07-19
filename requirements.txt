@@ -1,4 +1,6 @@
-binance-connector==3.5.1
+# requirements.txt
+binance-futures-connector==1.4.0
 pandas
 numpy
 ta
+
