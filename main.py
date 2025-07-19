@@ -1,7 +1,7 @@
 import os
 import time
 from datetime import datetime
-from binance.um_futures import UMFutures
+from binance.um_futures import UMFutures  # ✅ 正確搭配 1.4.0 版本
 from binance.error import ClientError
 from trade import manage_position
 
